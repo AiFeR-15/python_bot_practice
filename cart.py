@@ -15,10 +15,10 @@ order.append(new_order)
 print("Оновлений кошик:")
 print(order)
 
-price_new=int(input("Оновлена ціна 'Піци Маргарити': "))
-order[0]["price"]=price_new
+updated_pizza_price=int(input("Оновлена ціна 'Піци Маргарити': "))
+order[0]["price"]=updated_pizza_price
 
 with open("order_data.json", "w", encoding="utf-8") as file:
     json.dump(order, file , indent=4, ensure_ascii=False)
 
-    print("Дані успішно збережено! Відкривай файл order_data.json.")
+print("Дані успішно збережено! Відкривай файл order_data.json.")
