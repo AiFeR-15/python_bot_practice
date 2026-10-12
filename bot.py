@@ -5,6 +5,7 @@ from aiogram.filters import CommandStart
 from dotenv import load_dotenv
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram import F
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 load_dotenv()
 # Встав сюди свій токен у лапках
@@ -25,6 +26,13 @@ main_menu = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
+my_github_btn = InlineKeyboardButton(text = "🔗 Мій GitHub", url="https://github.com/AiFeR-15")
+my_portfolio_btn = InlineKeyboardButton(text = "Мій портфоліо", url="https://www.google.com")
+
+inline_menu=InlineKeyboardMarkup(
+    inline_keyboard=[[my_github_btn ,my_portfolio_btn]]
+)
+
 # Ця функція зловить повідомлення, коли ти натиснеш "Start" у боті
 @dp.message(CommandStart())
 async def command_start_handler(message: types.Message):
@@ -43,7 +51,8 @@ async def shopping_cart(message: types.Message):
 
 @dp.message(F.text == "👤 Профіль")
 async def profile(message: types.Message):
-    await message.answer(f"Логін: {message.from_user.first_name}")
+    await message.answer(f"Логін: {message.from_user.first_name}",
+    reply_markup=inline_menu)
 
 # Головна функція запуску
 async def main():
