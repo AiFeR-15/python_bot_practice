@@ -36,6 +36,12 @@ inline_menu=InlineKeyboardMarkup(
     [your_bonus]]
 )
 
+back_btn= InlineKeyboardButton(text = "⬅️ Назад", callback_data="back_to_profile")
+
+back_menu=InlineKeyboardMarkup(
+    inline_keyboard=[[back_btn]]
+)
+
 # Ця функція зловить повідомлення, коли ти натиснеш "Start" у боті
 @dp.message(CommandStart())
 async def command_start_handler(message: types.Message):
@@ -59,7 +65,13 @@ async def profile(message: types.Message):
 
 @dp.callback_query(F.data == "get_bonus")
 async def bonus_handler(callback: types.CallbackQuery):
-    await callback.message.answer("Твій бонус: 100 балів!")
+    await callback.message.edit_text("Твій бонус: 100 балів!", reply_markup=back_menu)
+    await callback.answer("Бонус зараховано!", show_alert=False)
+
+@dp.callback_query(F.data == "back_to_profile")
+async def back_profile(callback: types.CallbackQuery):
+    await callback.message.edit_text(f"Логін: {callback.from_user.first_name}", reply_markup=inline_menu)
+    await callback.answer()
 
 # Головна функція запуску
 async def main():
