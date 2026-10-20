@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram import F
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.context import FSMContext
 
 load_dotenv()
 # Встав сюди свій токен у лапках
@@ -30,10 +32,10 @@ main_menu = ReplyKeyboardMarkup(
 my_github_btn = InlineKeyboardButton(text = "🔗 Мій GitHub", url="https://github.com/AiFeR-15")
 my_portfolio_btn = InlineKeyboardButton(text = "Мій портфоліо", url="https://www.google.com")
 your_bonus= InlineKeyboardButton(text="🎁 Отримати бонус", callback_data="get_bonus")
-
+response= InlineKeyboardButton(text="✍️ Залишити відгук",callback_data="leave_feedback")
 inline_menu=InlineKeyboardMarkup(
     inline_keyboard=[[my_github_btn ,my_portfolio_btn],
-    [your_bonus]]
+    [your_bonus], [response]]
 )
 
 back_btn= InlineKeyboardButton(text = "⬅️ Назад", callback_data="back_to_profile")
@@ -41,6 +43,9 @@ back_btn= InlineKeyboardButton(text = "⬅️ Назад", callback_data="back_t
 back_menu=InlineKeyboardMarkup(
     inline_keyboard=[[back_btn]]
 )
+
+class Form(StatesGroup):
+    waiting_for_feedback=State()
 
 # Ця функція зловить повідомлення, коли ти натиснеш "Start" у боті
 @dp.message(CommandStart())
@@ -72,6 +77,16 @@ async def bonus_handler(callback: types.CallbackQuery):
 async def back_profile(callback: types.CallbackQuery):
     await callback.message.edit_text(f"Логін: {callback.from_user.first_name}", reply_markup=inline_menu)
     await callback.answer()
+
+@dp.callback_query(F.data=="leave_feedback")
+async def feedback_start(callback: types.CallbackQuery, state: FSMContext):
+    await callback.message.edit_text("Напишіть ваш відгук в чат:")
+    await state.set_state(Form.waiting_for_feedback)
+
+@dp.message(Form.waiting_for_feedback)
+async def feddback_finish(message: types.Message, state: FSMContext):
+    await message.answer(f"Дякую за ваш відгук!\nВін важливий для нас!")
+    await state.clear()
 
 # Головна функція запуску
 async def main():
