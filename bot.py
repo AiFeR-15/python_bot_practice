@@ -17,6 +17,8 @@ TOKEN = os.getenv("BOT_TOKEN")
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
+MENU_ITEMS=["піца","сік","печиво"]
+
 main_menu = ReplyKeyboardMarkup(
     keyboard=[
         # Перший внутрішній список - це верхній рядок кнопок
@@ -33,6 +35,7 @@ my_github_btn = InlineKeyboardButton(text = "🔗 Мій GitHub", url="https://g
 my_portfolio_btn = InlineKeyboardButton(text = "Мій портфоліо", url="https://www.google.com")
 your_bonus= InlineKeyboardButton(text="🎁 Отримати бонус", callback_data="get_bonus")
 response= InlineKeyboardButton(text="✍️ Залишити відгук",callback_data="leave_feedback")
+
 inline_menu=InlineKeyboardMarkup(
     inline_keyboard=[[my_github_btn ,my_portfolio_btn],
     [your_bonus], [response]]
@@ -47,6 +50,10 @@ back_menu=InlineKeyboardMarkup(
 class Form(StatesGroup):
     waiting_for_feedback=State()
 
+class OrderCart(StatesGroup):
+    name_food=State()
+    count_food=State()
+
 # Ця функція зловить повідомлення, коли ти натиснеш "Start" у боті
 @dp.message(CommandStart())
 async def command_start_handler(message: types.Message):
@@ -60,8 +67,44 @@ async def menu_handler(message: types.Message):
     await message.answer("Ось наше меню: 1. Піца, 2. Сік, 3. Печиво. Що бажаєте додати?")
 
 @dp.message(F.text == "🛒 Мій кошик")
-async def shopping_cart(message: types.Message):
-    await message.answer("Поки нічого немає, ми над цим працюємо!")
+async def shopping_cart(message: types.Message, state: FSMContext):
+    await message.answer("Що саме ви хочете замовити? Напишіть назву:")
+    await state.set_state(OrderCart.name_food)
+
+@dp.message(OrderCart.name_food)
+async def order_start(message: types.Message, state: FSMContext):
+    if not message.text:
+        return
+    food = message.text.strip().lower()
+    if food not in MENU_ITEMS:
+            available_food = ", ".join(MENU_ITEMS)
+            await message.answer(
+                f"Такої страви немає в меню. Зараз доступні: {available_food}.\n"
+                "Напишіть назву ще раз:"
+            )
+            return
+    await state.update_data(food=message.text.strip().lower())
+    await message.answer("Скільки порцій ви хотіли: ")
+    await state.set_state(OrderCart.count_food)
+
+@dp.message(OrderCart.count_food)
+async def order_finish(message: types.Message, state: FSMContext):
+    if not message.text:
+        return
+    
+    if not message.text.isdigit():
+        await message.answer("Введіть к-сть цифрами будь ласка!")
+        return
+    count=int(message.text)
+    if count <=0:
+        return
+        
+    data = await state.get_data()
+    food_name=data["food"]
+    await message.answer(f"{food_name}: {message.text}")
+    await state.clear()
+
+
 
 @dp.message(F.text == "👤 Профіль")
 async def profile(message: types.Message):
@@ -87,6 +130,8 @@ async def feedback_start(callback: types.CallbackQuery, state: FSMContext):
 async def feddback_finish(message: types.Message, state: FSMContext):
     await message.answer(f"Дякую за ваш відгук!\nВін важливий для нас!")
     await state.clear()
+
+
 
 # Головна функція запуску
 async def main():
